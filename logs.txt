@@ -1,0 +1,6 @@
+10/11/2021 11:59:04 - https://github.com - online: true
+10/11/2021 11:59:05 - http://google.com.br - online: true
+10/11/2021 11:59:05 - http://alura.com.br - online: true
+10/11/2021 11:59:10 - https://github.com - online: true
+10/11/2021 11:59:10 - http://google.com.br - online: true
+10/11/2021 11:59:10 - http://alura.com.br - online: true

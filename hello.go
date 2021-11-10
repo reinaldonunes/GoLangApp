@@ -1,10 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 )
+
+const monitoramento = 2
+const delay = 5
 
 func main() {
 	showIntro()
@@ -15,11 +24,13 @@ func main() {
 		case 1:
 			initMonitor()
 		case 2:
-			fmt.Println("Comando do 2")
+			fmt.Println("Exibindo logs...")
+			printLogs()
 		case 0:
 			os.Exit(0)
 		default:
 			fmt.Println("Comando inválido")
+			os.Exit(-1)
 		}
 	}
 }
@@ -49,15 +60,71 @@ func readMenu() int {
 
 func initMonitor() {
 	fmt.Println("Iniciando monitoramento...")
-	sites := []string{"https://google.com.br", "https://github.com", "https://alura.com.br"}
+	sites := readUrls()
+	//sites := []string{"https://google.com.br", "https://github.com", "https://alura.com.br"}
 
-	for i := 0; i < len(sites); i++ {
-		resp, _ := http.Get(sites[i])
-
-		if resp.StatusCode == 200 {
-			fmt.Println("Site:", sites[i], "foi carregado com sucesso!!!")
-		} else {
-			fmt.Println("Site:", sites[i], "apresentou falha no carregamento!!!")
+	for i := 0; i < monitoramento; i++ {
+		for i, site := range sites {
+			fmt.Println("Testando o site", i, ":", site)
+			testSite(site)
 		}
+		time.Sleep(delay * time.Second)
+		fmt.Println("")
 	}
+	fmt.Println("")
+}
+
+func testSite(site string) {
+	resp, err := http.Get(site)
+	if err != nil {
+		fmt.Println("Ocorreu um erro:", err)
+	}
+
+	if resp.StatusCode == 200 {
+		fmt.Println("Site:", site, "foi carregado com sucesso!!!")
+		logs(site, true)
+	} else {
+		fmt.Println("Site:", site, "apresentou falha no carregamento!!!")
+		logs(site, false)
+	}
+}
+
+func readUrls() []string {
+	var sites []string
+	file, err := os.Open("urls.txt")
+
+	if err != nil {
+		fmt.Println("Ocorreu um erro!", err)
+	}
+
+	reader := bufio.NewReader(file)
+	for {
+		line, err := reader.ReadString('\n')
+		line = strings.TrimSpace(line)
+		sites = append(sites, line)
+
+		if err == io.EOF {
+			break
+		}
+
+	}
+	file.Close()
+	return sites
+}
+
+func logs(site string, status bool) {
+	file, err := os.OpenFile("logs.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println(err)
+	}
+	file.WriteString(time.Now().Format("02/01/2006 15:04:05") + " - " + site + " - online: " + strconv.FormatBool(status) + "\n")
+	file.Close()
+}
+
+func printLogs() {
+	file, err := ioutil.ReadFile("logs.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(file))
 }
